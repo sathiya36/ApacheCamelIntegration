@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd        http://camel.apache.org/schema/spring       http://camel.apache.org/schema/spring/camel-spring.xsd">
+    <camelContext id="camel" xmlns="http://camel.apache.org/schema/spring">
+        <dataFormats>
+            <xmljson id="xmljson"/>
+            <xmljson expandableProperties="Stud"
+                forceTopLevelObject="true" id="xmljsonWithOptions"
+                removeNamespacePrefixes="true" rootName="Studs"
+                skipNamespaces="true" trimSpaces="true"/>
+            <jacksonxml id="xmltojson" unmarshalTypeName="com.Pojos.Shipto"/>
+        </dataFormats>
+        <restConfiguration bindingMode="auto" component="restlet"
+            host="localhost" port="9002"/>
+        <rest id="rest-d002f224-6950-4747-81cb-f61e6dc16869">
+            <post id="post-5483d581-0b6d-46e4-be6c-a79836b402cb" uri="/post/XMLToXML">
+                <to uri="direct:XMLToXML"/>
+            </post>
+            <post id="post-5483d581-0b6d-46e4-be6c-a79836b402cc" uri="/post/XMLToJSON">
+                <to uri="direct:XMLToJSON"/>
+            </post>
+            <post id="post-5483d581-0b6d-46e4-be6c-a79836b402cd" uri="/post/JSONToXML">
+                <to uri="direct:JSONToXML"/>
+            </post>
+        </rest>
+        <route id="setPayloadRouteForXMLToXMLPost">
+            <from id="_from1" uri="direct:XMLToXML"/>
+            <to id="_to1" uri="xslt:xslt/XMLToXML.xsl"/>
+            <log id="_log1" message="Response"/>
+        </route>
+        <route id="setPayloadRouteForXMLToJSONPost">
+            <from id="_from2" uri="direct:XMLToJSON"/>
+            <unmarshal id="_unmarshal1" ref="xmltojson"/>
+            <log id="_log2" message="Response"/>
+        </route>
+        <route id="setPayloadRouteForJSONToXMLPost">
+            <from id="_from3" uri="direct:JSONToXML"/>
+            <unmarshal id="_unmarshal2" ref="xmljsonWithOptions"/>
+            <log id="_log3" message="Response"/>
+        </route>
+    </camelContext>
+</beans>
