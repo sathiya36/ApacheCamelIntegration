@@ -1,42 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd        http://camel.apache.org/schema/spring       http://camel.apache.org/schema/spring/camel-spring.xsd">
+    
+    <bean id="XMLModuleForXMLToPOJO" class="com.fasterxml.jackson.dataformat.xml.JacksonXmlModule">
+    	<property name="DefaultUseWrapper" value="false"></property>
+    </bean>
+    
+    <bean id="XMlMapperForXMLToPOJO" class="com.fasterxml.jackson.dataformat.xml.XmlMapper">
+    	<constructor-arg type="com.fasterxml.jackson.dataformat.xml.JacksonXmlModule" ref="XMLModuleForXMLToPOJO"></constructor-arg>
+    </bean>
+    
     <camelContext id="camel" xmlns="http://camel.apache.org/schema/spring">
+        
         <dataFormats>
-            <xmljson id="xmljson"/>
-            <xmljson expandableProperties="Stud"
-                forceTopLevelObject="true" id="xmljsonWithOptions"
-                removeNamespacePrefixes="true" rootName="Studs"
-                skipNamespaces="true" trimSpaces="true"/>
-            <jacksonxml id="xmltojson" unmarshalTypeName="com.Pojos.Shipto"/>
+        	<jacksonxml id="xmltojson" unmarshalTypeName="com.Pojos.Orders" enableFeatures="ACCEPT_EMPTY_STRING_AS_NULL_OBJECT" xmlMapper="XMlMapperForXMLToPOJO"/>
+           	<json id="pojotojson" library="Gson" prettyPrint="true" include="NULL"/>
+           	<json id="jsontoPojo" library="Gson" prettyPrint="true" unmarshalTypeName="com.Pojos.Orders"/>
         </dataFormats>
         <restConfiguration bindingMode="auto" component="restlet"
-            host="localhost" port="9002"/>
-        <rest id="rest-d002f224-6950-4747-81cb-f61e6dc16869">
-            <post id="post-5483d581-0b6d-46e4-be6c-a79836b402cb" uri="/post/XMLToXML">
+            host="localhost" port="9002"></restConfiguration>
+        <rest id="rest-d002f224-6950-4747-81cb-f61e6dc16869" path="/XMLToXML">
+            <post id="post-5483d581-0b6d-46e4-be6c-a79836b402cb">
                 <to uri="direct:XMLToXML"/>
             </post>
-            <post id="post-5483d581-0b6d-46e4-be6c-a79836b402cc" uri="/post/XMLToJSON">
+        </rest>
+        <rest id="rest-6d216c9c-fec9-4342-b12b-f663270d1f0e" path="/XMLToJSON" consumes="application/xml" produces="application/json">
+            <post id="post-5483d581-0b6d-46e4-be6c-a79836b402cc">
                 <to uri="direct:XMLToJSON"/>
             </post>
-            <post id="post-5483d581-0b6d-46e4-be6c-a79836b402cd" uri="/post/JSONToXML">
+        </rest>
+        <rest id="rest-996be576-2f46-4c80-bae5-8b3e7a8f3022" path="/JSONToXML" consumes="application/json" produces="application/xml">
+            <post id="post-5483d581-0b6d-46e4-be6c-a79836b402cd">
                 <to uri="direct:JSONToXML"/>
             </post>
         </rest>
         <route id="setPayloadRouteForXMLToXMLPost">
             <from id="_from1" uri="direct:XMLToXML"/>
+            <log id="route-log" message=">>> ${body}"/>
             <to id="_to1" uri="xslt:xslt/XMLToXML.xsl"/>
             <log id="_log1" message="Response"/>
         </route>
         <route id="setPayloadRouteForXMLToJSONPost">
             <from id="_from2" uri="direct:XMLToJSON"/>
-            <unmarshal id="_unmarshal1" ref="xmltojson"/>
-            <log id="_log2" message="Response"/>
+            <unmarshal id="_unmarshal1">
+                <custom ref="xmltojson"/>
+            </unmarshal>
+            <log id="_log21" message="POJOResponse >>> ${body}"/>
+            <marshal><custom ref="pojotojson"/></marshal>
+            <log id="_log21" message="JSONResponse >>> ${body}"/>
+            <convertBodyTo type="java.lang.String"></convertBodyTo>
+            <log id="_log2" message="STringResponse >>> ${body}"/>
         </route>
         <route id="setPayloadRouteForJSONToXMLPost">
             <from id="_from3" uri="direct:JSONToXML"/>
-            <unmarshal id="_unmarshal2" ref="xmljsonWithOptions"/>
-            <log id="_log3" message="Response"/>
+            <log id="_log4" message="JSONResponse  >>> ${body}"/>
+            <convertBodyTo type="java.lang.String"></convertBodyTo>
+            <log id="_log5" message="StringResponse  >>> ${body}"/>
+            <unmarshal id="_unmarshal2" ref="jsontoPojo"/>
+            <log id="_log3" message="Response  >>> ${body}"/>
         </route>
     </camelContext>
 </beans>
