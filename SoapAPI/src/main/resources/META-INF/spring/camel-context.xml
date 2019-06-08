@@ -7,15 +7,14 @@
         serviceClass="com.samplesoap.SOATestEndpoint"
         serviceName="a:SOATestEndpointService"
         wsdlURL="/wsdl/Sample.wsdl" xmlns:a="http://SampleSOAP.com">
-        	<cxf:properties>
-		        <entry key="dataFormat" value="PAYLOAD"/>
-		    </cxf:properties>
-        </cxf:cxfEndpoint>
-    
-	<camelContext id="camel" xmlns="http://camel.apache.org/schema/spring">
+        <cxf:properties>
+            <entry key="dataFormat" value="PAYLOAD"/>
+        </cxf:properties>
+    </cxf:cxfEndpoint>
+    <camelContext id="camel" xmlns="http://camel.apache.org/schema/spring">
         <route id="simple-route">
             <from id="_from1" uri="cxf:bean:CXFTest"/>
-            <to uri="xslt:xslt/SOAPResponse.xsl"/>
+            <to id="_to1" uri="xslt:xslt/SOAPResponse.xsl"/>
             <log id="route-log" message=">>> ${body}"/>
         </route>
     </camelContext>

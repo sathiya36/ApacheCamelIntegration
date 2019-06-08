@@ -2,26 +2,19 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
     xmlns:cxf="http://camel.apache.org/schema/cxf"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd        http://camel.apache.org/schema/spring       http://camel.apache.org/schema/spring/camel-spring.xsd       http://camel.apache.org/schema/cxf http://camel.apache.org/schema/cxf/camel-cxf-2.8.3.xsd">
-    <cxf:cxfEndpoint address="/SampleSOAP"
+    <cxf:cxfEndpoint address="http://localhost:9001/cxf/SampleSOAP"
         endpointName="a:SOATestEndpoint" id="CXFTest"
-        
         serviceClass="com.samplesoap.SOATestEndpoint"
         serviceName="a:SOATestEndpointService"
-        wsdlURL="/wsdl/Sample.wsdl" xmlns:a="http://SampleSOAP.com"/>
-    <!--  
-         <cxf:cxfEndpoint id="CXFTest"
-                   address="http://localhost:9001/cxf/SampleSOAP"
-                   endpointName="a:SOATestEndpoint"
-                   serviceClass="com.samplesoap.SOATestEndpoint"
-                   serviceName="a:SOATestEndpointService"
-                    wsdlURL="/wsdl/Sample.wsdl" xmlns:a="http://SampleSOAP.com"/> -->
+        wsdlURL="/wsdl/Sample.wsdl" xmlns:a="http://SampleSOAP.com">
+        <cxf:properties>
+            <entry key="dataFormat" value="PAYLOAD"/>
+        </cxf:properties>
+    </cxf:cxfEndpoint>
     <camelContext id="camel" xmlns="http://camel.apache.org/schema/spring">
         <route id="simple-route">
             <from id="_from1" uri="cxf:bean:CXFTest"/>
-            <log id="req-log" message=">>> ${body}"/>
-            <setBody id="route-setBody">
-                <simple><![CDATA[<outputSOATest><result>Hello World from camel-context.xml</result></outputSOATest>]]></simple>
-            </setBody>
+            <to id="_to1" uri="xslt:xslt/SOAPResponse.xsl"/>
             <log id="route-log" message=">>> ${body}"/>
         </route>
     </camelContext>
