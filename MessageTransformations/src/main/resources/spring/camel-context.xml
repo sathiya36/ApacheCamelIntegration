@@ -1,35 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd        http://camel.apache.org/schema/spring       http://camel.apache.org/schema/spring/camel-spring.xsd">
-    
-    <bean id="XMLModuleForXMLToPOJO" class="com.fasterxml.jackson.dataformat.xml.JacksonXmlModule">
-    	<property name="DefaultUseWrapper" value="false"></property>
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd        http://camel.apache.org/schema/spring       http://camel.apache.org/schema/spring/camel-spring.xsd">
+    <bean class="com.fasterxml.jackson.dataformat.xml.JacksonXmlModule" id="XMLModuleForXMLToPOJO">
+        <property name="DefaultUseWrapper" value="false"/>
     </bean>
-    
-    <bean id="XMlMapperForXMLToPOJO" class="com.fasterxml.jackson.dataformat.xml.XmlMapper">
-    	<constructor-arg type="com.fasterxml.jackson.dataformat.xml.JacksonXmlModule" ref="XMLModuleForXMLToPOJO"></constructor-arg>
+    <bean class="com.fasterxml.jackson.dataformat.xml.XmlMapper" id="XMlMapperForXMLToPOJO">
+        <constructor-arg ref="XMLModuleForXMLToPOJO" type="com.fasterxml.jackson.dataformat.xml.JacksonXmlModule"/>
     </bean>
-    
+    <bean class="org.mycompany.ObjMapper" id="ObjectMapperForJSONToPOJO">
+    </bean>
     <camelContext id="camel" xmlns="http://camel.apache.org/schema/spring">
-        
         <dataFormats>
-        	<jacksonxml id="xmltojson" unmarshalTypeName="com.Pojos.Orders" enableFeatures="ACCEPT_EMPTY_STRING_AS_NULL_OBJECT" xmlMapper="XMlMapperForXMLToPOJO"/>
-           	<json id="pojotojson" library="Gson" prettyPrint="true" include="NULL"/>
-           	<json id="jsontoPojo" library="Gson" prettyPrint="true" unmarshalTypeName="com.Pojos.Orders"/>
+            <jacksonxml
+                enableFeatures="ACCEPT_EMPTY_STRING_AS_NULL_OBJECT"
+                id="xmltojson" unmarshalTypeName="com.Pojos.Orders" xmlMapper="XMlMapperForXMLToPOJO"/>
+            <json id="pojotojson" include="NULL" library="Gson" prettyPrint="true"/>
+            <!-- <json id="jsontoPojo" library="Jackson" enableFeatures="AUTO_DETECT_FIELDS" objectMapper="ObjectMapperForJSONToPOJO" unmarshalTypeName="com.Pojos.Orders"/> -->
         </dataFormats>
-        <restConfiguration bindingMode="auto" component="restlet"
-            host="localhost" port="9002"></restConfiguration>
+        <restConfiguration component="restlet" host="localhost" port="9002"/>
         <rest id="rest-d002f224-6950-4747-81cb-f61e6dc16869" path="/XMLToXML">
             <post id="post-5483d581-0b6d-46e4-be6c-a79836b402cb">
                 <to uri="direct:XMLToXML"/>
             </post>
         </rest>
-        <rest id="rest-6d216c9c-fec9-4342-b12b-f663270d1f0e" path="/XMLToJSON" consumes="application/xml" produces="application/json">
+        <rest consumes="application/xml"
+            id="rest-6d216c9c-fec9-4342-b12b-f663270d1f0e"
+            path="/XMLToJSON" produces="application/json">
             <post id="post-5483d581-0b6d-46e4-be6c-a79836b402cc">
                 <to uri="direct:XMLToJSON"/>
             </post>
         </rest>
-        <rest id="rest-996be576-2f46-4c80-bae5-8b3e7a8f3022" path="/JSONToXML" consumes="application/json" produces="application/xml">
+        <rest consumes="application/json"
+            id="rest-996be576-2f46-4c80-bae5-8b3e7a8f3022"
+            path="/JSONToXML" produces="application/xml">
             <post id="post-5483d581-0b6d-46e4-be6c-a79836b402cd">
                 <to uri="direct:JSONToXML"/>
             </post>
@@ -46,18 +49,23 @@
                 <custom ref="xmltojson"/>
             </unmarshal>
             <log id="_log21" message="POJOResponse >>> ${body}"/>
-            <marshal><custom ref="pojotojson"/></marshal>
+            <marshal id="_marshal1">
+                <custom ref="pojotojson"/>
+            </marshal>
             <log id="_log21" message="JSONResponse >>> ${body}"/>
-            <convertBodyTo type="java.lang.String"></convertBodyTo>
+            <convertBodyTo id="_convertBodyTo1" type="java.lang.String"/>
             <log id="_log2" message="STringResponse >>> ${body}"/>
         </route>
         <route id="setPayloadRouteForJSONToXMLPost">
             <from id="_from3" uri="direct:JSONToXML"/>
             <log id="_log4" message="JSONResponse  >>> ${body}"/>
-            <convertBodyTo type="java.lang.String"></convertBodyTo>
-            <log id="_log5" message="StringResponse  >>> ${body}"/>
-            <unmarshal id="_unmarshal2" ref="jsontoPojo"/>
-            <log id="_log3" message="Response  >>> ${body}"/>
+            <!-- <unmarshal id="_unmarshal2"><custom ref="jsontoPojo"/></unmarshal> -->
+            <to uri="bean:ObjectMapperForJSONToPOJO?method=processPersonSearchResponseJSON"/>
+            <log id="_log3" message="POJOResponse  >>> ${body}"/>
+            <marshal id="_marshal2">
+                <custom ref="xmltojson"/>
+            </marshal>
+            <log id="_log3" message="XMLResponse  >>> ${body}"/>
         </route>
     </camelContext>
 </beans>
